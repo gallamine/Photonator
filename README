@@ -1,0 +1,2 @@
+PHOTONATOR is an opensource project developed by William Cox as part of his PhD research on underwater optical communication underwater.
+Photonator simulates the freespace movement of photons using a Monte Carlo approach. The code is written in MATLAB and can probably be easily ported to Octave.
