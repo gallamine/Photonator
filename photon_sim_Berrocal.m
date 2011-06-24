@@ -6,12 +6,37 @@
 % clear all
 % clc
 
+if (isunix())
+   cd('/home/wccox/Dropbox/WCC Research/mc');
+   
+          
+    % Define these variables appropriately:
+    mail = 'wccoxresearch@gmail.com'; %Your GMail email address
+    load password
+
+    % Then this code will set up the preferences properly:
+    setpref('Internet','E_mail',mail);
+    setpref('Internet','SMTP_Server','smtp.gmail.com');
+    setpref('Internet','SMTP_Username',mail);
+    setpref('Internet','SMTP_Password',password);
+    props = java.lang.System.getProperties;
+    props.setProperty('mail.smtp.auth','true');
+    props.setProperty('mail.smtp.socketFactory.class', 'javax.net.ssl.SSLSocketFactory');
+    props.setProperty('mail.smtp.socketFactory.port','465');
+
+    % Send the email. Note that the first input is the address you are sending the email to
+    
+    sendmail('gallamine@gmail.com','Simulation started on AWS.') 
+   
+end
+
 useVCL = 'false';
-sendEmail = 'true';
+sendEmail = 'false';
 saveOutput = 'false';
+stop = 0;
 
 num_photons = 1e6;
-num_sims = 8; 
+num_sims = 10; 
 n_water = 1.33;                     % index of refraction of water
 n_window = 1.585;                   % index of refraction of polycarbonate
 
@@ -23,7 +48,7 @@ diverg = 0;
 % albedo = (c-a)/c;   % Water albedo is scattering coef./atten. coef. (b/c unitless)
 albedo = 1;          % Albedo of Maalox (ranges from 0.8 to 0.95) - IF YOU CHANGE THIS, BE SURE TO CHANGE THE MINIMUM POWER VALUE!!!
 
-c = 500;
+c = 1000;
 b = c * albedo;
 a = c - b;
 
@@ -50,7 +75,8 @@ rec_aperture = [0.01]; % rec_aperture = ones(num_rx,1).*0.0508;  % 0.0508 m = 2 
 rec_fov = [0.296];     % 0.314159 = 18 deg FOV, 2.27 = 130 deg, 0.0785 = 5 deg, 0.296 = 8.5*2
 
 
-receiver_z = 0.0050000001;                     % Z position of the receiver (in meters)
+% receiver_z = 0.0050000001;                     % Z position of the receiver (in meters)
+receiver_z = 0.01;
 
 % Diameter of aperture (in meters): 
 % 0.0508m = 2"
@@ -104,8 +130,10 @@ allDist = 0;
 
 tStart = tic;
 
+poolSize = 7;
+
 if (matlabpool('size')==0)
-    matlabpool open local 8
+    matlabpool('open','local',poolSize)
 end
 
 totalPhotonsAtRxPlane = 0;
@@ -113,6 +141,15 @@ run_counter = 0;
 
 recPosX = 0;
 recPosY = 0;
+
+
+if (isunix())
+   loadStartFTP();
+   load('startupOptions.mat');
+   if stop==1
+%    	error('Looks like we arent supposed to run right now');
+   end
+end
 
 parfor simcount = 1:num_sims
     %%
@@ -197,13 +234,14 @@ sd_dist = sqrt(totalVarDist);
 
 sim_time = toc(tStart) / 60
 
-
-
-figure(4);
-cnt = hist3([recPosY' recPosX'],'Edges',{-0.005:5e-5:0.005 -0.005:5e-5:0.005});
-finalPdf = cnt./max(max(cnt));
-imshow(finalPdf,[0 1])
-colormap(jet);
+if (~isunix())
+    grid = linspace(-0.005,0.005,201);
+    figure(4);
+    cnt = hist3([recPosY' recPosX'],'Edges',{-0.005:5e-5:0.005 -0.005:5e-5:0.005});
+    finalPdf = cnt./max(max(cnt));
+    imagesc(finalPdf);
+    colormap(jet);
+end
 
 
 
@@ -279,6 +317,13 @@ beep
 beep
 beep
 
+filename = sprintf('outputData-%s.mat',datestr(now,'HH-MM-SS_yyyy-mm-dd'));
+if (isunix())
+    
+    save(filename,'recPosX','recPosY');
+    saveDataFTP(filename);
+end
+
 if (strcmp(useVCL,'true'))
     cd('K:\MC_data')
     save output.mat
@@ -298,13 +343,13 @@ if (strcmp(sendEmail,'true'))
     name = lower(name);
     
     subject = sprintf('Simulation on %s with %d photons, %d scattering events completed.', name, num_photons*num_sims, scattering_events)
-    body = sprintf('C = %d (1/m), A = %d (1/m). Simulation took %d minutes to run.',c,a,sim_time);
+    body = sprintf('C = %d (1/m), A = %d (1/m). Simulation took %d minutes to run. Sim. output filename: %s',c,a,sim_time,filename);
     save output.mat
    
        
     % Define these variables appropriately:
     mail = 'wccoxresearch@gmail.com'; %Your GMail email address
-    password = ''; %Your GMail password
+    load password
 
     % Then this code will set up the preferences properly:
     setpref('Internet','E_mail',mail);

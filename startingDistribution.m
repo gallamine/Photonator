@@ -6,13 +6,21 @@ function [xPos,yPos] = startingDistribution(numPhotons)
     minVal = 1;
     maxVal = 200;
     
-    im = imread('Berrocal/laser_intensity.bmp');
-    laserIntensity = double(rgb2ind(im, jet,'nodither'));
-    laserIntensity(laserIntensity==0) = 0.00001*rand();
+    %im = imread('Berrocal/laser_intensity.bmp');
+    if (isunix())
+        load('Berrocal/Data/1micOD2/Incident');
+    else
+        load('Berrocal\Data\1micOD2\Incident');
+    end
+    Incident(Incident == 0) = 1;
 
-    imSize = size(laserIntensity);
+    
+%     Incident = double(rgb2ind(im, jet,'nodither'));
+%     Incident(Incident==0) = 0.00001*rand();
+ 
+    imSize = size(Incident);
 
-    laserIntensityUnroll = reshape(laserIntensity,imSize(1)*imSize(2),1);
+    laserIntensityUnroll = reshape(Incident,imSize(1)*imSize(2),1);
 
     imInt = cumtrapz(laserIntensityUnroll);
 
@@ -27,8 +35,11 @@ function [xPos,yPos] = startingDistribution(numPhotons)
         %value = 0.838820707;
         closetIndex = lookupCDF(imCDF,value);
         vectPos(j) = (closetIndex-1) + (value - imCDF((closetIndex-1)))*(closetIndex - (closetIndex-1))/(imCDF(closetIndex) - imCDF(closetIndex-1));
-       yPos(j) = ceil(vectPos(j)/imSize(1));
-       xPos(j) = round(mod(vectPos(j)-1,imSize(2))) + 1;
+       xPos(j) = ceil(vectPos(j)/imSize(1));
+       yPos(j) = floor(mod(vectPos(j)-1,imSize(2))) + 1;
+       if xPos(j) == 201
+           disp('oh!')
+       end
 %        
 %        if  ((xPos(j) > 200) || (yPos(j) > 200))
 %            disp('Woah nelly!')

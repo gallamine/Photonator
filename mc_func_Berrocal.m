@@ -32,7 +32,7 @@ function [total_time,total_rec_power,total_rec_packets,rec_loc_final,total_rec_d
 useLimits = 'true';
 
 if strcmp(useLimits,'true')
-    xLimMax = 0.005;
+    xLimMax = 0.005000;
     xLimMin = -0.005;
     yLimMax = 0.005;
     yLimMin = -0.005;
@@ -67,13 +67,19 @@ tic;
 % beta = init_angle;   % direction the transmitter is pointing (zenith)
 % alpha = init_angle2;     % direction the transmitter is pointing (azmuth)
 
-% point down z-axis
-[x,y] = startingDistribution(num_photons);         % Assuming a square end size
-photon(:,1) = xLimMin;                              % x position
-photon(:,2) = y.*yLimMax;                           % y position
-photon(:,3) = x.*xLimMax;                           % z position
 
-photon(:,4) = ones(num_photons,1);         % z - 1
+[x,y] = startingDistribution(num_photons);         % Assuming a square end size
+
+%point down z-axis
+photon(:,1) = x.*xLimMax;                              % x position
+photon(:,2) = y.*yLimMax;                           % y position
+photon(:,6) = ones(num_photons,1);         % z - 1
+
+% photon(:,1) = xLimMax;                              % x position
+% photon(:,2) = y.*yLimMax;                           % y position
+% photon(:,3) = x.*xLimMax;                           % z position
+% photon(:,4) = -1.*ones(num_photons,1);         % x - 1
+
 photonsRemaining = num_photons;             % count down for each photon received/terminated
 
 clear theta phi  z beta alpha

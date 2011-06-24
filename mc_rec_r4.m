@@ -25,9 +25,9 @@ weight_mean = zeros(1,num_rx);    % Mean weight for each Rx
 weight_sqravg = zeros(1,num_rx);    %E[W^2] 
 weight_var = zeros(1,num_rx);     % Variance of weight for each Rx
 
-distances =  zeros(1,num_rx);       % Distances from photon to 0,0 point - Initailize to full size, crop at end
-angles =  zeros(1,num_rx);          % Angle of received photon
-weights =  zeros(1,num_rx);         % Weight of received photon
+distances =  zeros(1,num_photons);       % Distances from photon to 0,0 point - Initailize to full size, crop at end
+angles =  zeros(1,num_photons);          % Angle of received photon
+weights =  zeros(1,num_photons);         % Weight of received photon
 
 dWindow = 0.00635;              % 0.25 inches
 dAir = 0.127;                   % 5 inches
@@ -39,6 +39,10 @@ nWaterWindow = nWater/nWindow;
 nWindowAir = nWindow/nAir;
 
 critAngSine = nAir/nWater;             % sine T1 = nair/nwater sine T3
+
+if (num_rx > 1)
+    error('You need to change how the distance array is stored!');
+end
    
 for i = 1:num_photons                   % iterate over every photon on receiver plane
    ph_x = rec_loc_final(i,1);

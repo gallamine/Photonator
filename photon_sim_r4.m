@@ -11,25 +11,27 @@ useVCL = 'false';
 sendEmail = 'false';
 saveOutput = 'false';
 
-num_photons = 1e5;
+num_photons = 5e5;
 num_sims = 8; 
 n_water = 1.33;                     % index of refraction of water
 n_window = 1.585;                   % index of refraction of polycarbonate
 
 diverg = 0;
 
-[cdf_scatter,angle] = generate_scatter('measured','maalox_alan');
+% [cdf_scatter,angle] = generate_scatter('measured','maalox_alan');
+% [cdf_scatter,angle] = generate_scatter('measured','petzold_maalox');
+[cdf_scatter,angle] = generate_scatter('measured','widemann_maalox');
 
 
 % albedo = (c-a)/c;   % Water albedo is scattering coef./atten. coef. (b/c unitless)
 albedo = 0.95;          % Albedo of Maalox (ranges from 0.8 to 0.95) - IF YOU CHANGE THIS, BE SURE TO CHANGE THE MINIMUM POWER VALUE!!!
 
-c = 1;
+c = 2.675;
 b = c * albedo;
 a = c - b;
 
 beamDiverg = degtorad(0.01);
-beamWidth = 0.001;                  % 1 mm
+beamWidth = 0.0008;                  % 1 mm
 
 % rec_pos = [0,0;
 %            0.01,0;
@@ -104,28 +106,23 @@ allWeights = 0;
 allAngles = 0;
 allDist = 0;
 
-% receiver_x = (1/c).*scattering_length;
-% c = [13.66/num_sims:13.66/num_sims:13.66];
-% c = [(3 .* ones(1,40)) (3.27 .* ones(1,50))]
-
-% c = scattering_length./receiver_x;
-% a = c.*(1-albedo);                      % albedo = b/c. a = c-b. a = c-c*albedo = c(1-albedo)
 
 tStart = tic;
 
+poolSize = 8;
 if (matlabpool('size')==0)
-    matlabpool open local 8
+    matlabpool('open','local',poolSize) 
 end
 
 totalPhotonsAtRxPlane = 0;
 run_counter = 0;
 
-
+recPosX = 0;
+recPosY = 0;
 
 parfor simcount = 1:num_sims
     %%
     simcount
-    %%disp('Starting simulation: %d',simcount)
     [total_time(simcount), ...
     total_rec_power, ...
     total_rec_packets, ...
@@ -194,10 +191,6 @@ totalVarDist = (1./(total_photons'-1)).*(distVarSum' + sum(photonCount.*(distMea
 totalMeanWeight = sum(weightMean,1)./num_sims;
 totalVarWeight = ((num_photons-1)/(num_photons*num_sims - 1)).*weightVarSum' + ((num_photons)/(num_photons*num_sims - 1)).*sum(weightMean - repmat(totalMeanWeight,size(weightMean,1),1),1).^2;
 
-% totalVarWeight2 = var([allWeights(2:end) zeros(1,(num_photons*num_sims-length(allWeights(2:end))))])                        % allWeights has a leading 0
-% totalVarAngle2 = var(allAngles(2:end))
-% totalVarDist2 = var(allDist(2:end))
-
 
 
 disp('total_power/(num_photons*num_sims) = ');
@@ -209,15 +202,9 @@ sim_time = toc(tStart) / 60
 % Distance 
 binMin = 0;
 binMax = 0.40;
-numBins = 100;
+numBins = 200;
 figure(4);
 hold on;
-% [cnt,bins] = hist(photonDist,100);
-% bins = bins + bins(1);                 % bins containts the bin centers, we want outer edge
-% binDelta = [bins] - [0 bins(1:end-1)];
-% cntNorm = cnt./(pi.*(2.*bins.*binDelta - binDelta.^2));     % Remove bias from the annular ring area (area -> distance)
-% cntNorm = cntNorm ./ cntNorm(1);                            % Normalize to peak value
-% semilogy(bins,cntNorm,'.');
 
 edges = [binMin:binMax/numBins:binMax];
 cnt = weightedhistc(photonDist,photonWeights,edges,'right');
@@ -225,26 +212,10 @@ cnt = cnt(1:end-1);
 binDelta = ones(1,length(cnt)).*binMax/numBins;
 cntNorm = cnt./(pi.*(2.*edges(2:end).*binDelta - binDelta.^2));     % Remove bias from the annular ring area (area -> distance)
 cntNorm = cntNorm ./ cntNorm(1);                            % Normalize to peak value
-semilogy(edges(2:end),cntNorm,'.');
-% 
-% figure(2); hold on;
-% edges = [binMin:binMax/numBins:binMax];
-% cnt = weightedhistc(photonDist,photonWeights,edges,'left');                % photons at 0 dist are put in the first bin, subsequent bins are for >0
-% binDelta = ones(1,length(cnt)-1).*binMax/numBins;
-% cntNorm = [cnt(1) (cnt(2:end)./(pi.*(2.*edges(2:end).*binDelta - binDelta.^2)))];     % Remove bias from the annular ring area (area -> distance)
-% cntNorm = cntNorm ./ cntNorm(1);                            % Normalize to peak value
-% semilogy(edges,cntNorm,'.');
+semilogy(edges(1:end-1),cntNorm,'.');
 
-figure(2);
-hold on;
-edges = [binMin:binMax/numBins:binMax];
-cnt = weightedhistc(photonDist,photonWeights,edges,'right');
-cnt = cnt(1:end-1);
-binDelta = ones(1,length(cnt)).*binMax/numBins;
-cntNorm = cnt./(2.*pi.*edges(2:end));
-cntNorm = cntNorm ./ cntNorm(end);                            % Normalize to peak value
-semilogy(edges(2:end),cntNorm,'.');
 
+% normalize based on the end value
 figure(1); hold on;
 edges = [binMin:binMax/numBins:binMax];
 cnt = weightedhistc(photonDist,photonWeights,edges,'right');
@@ -252,45 +223,12 @@ cnt = cnt(1:end-1);
 binDelta = ones(1,length(cnt)).*binMax/numBins;
 cntNorm = cnt./(pi.*(2.*edges(2:end).*binDelta - binDelta.^2));     % Remove bias from the annular ring area (area -> distance)
 cntNorm = cntNorm ./ cntNorm(end);                            % Normalize to peak value
-semilogy(edges(2:end),cntNorm,'.');
+semilogy(edges(1:end-1),cntNorm,'.');
 
 
 if (matlabpool('size')>0)
     %matlabpool close
 end
-
-%minutes_to_run = total_time/60
-
-
-% figure(8)                   % plot 3D histogram of photons on RX plane
-% hist3(received_location)
-% set(gcf,'renderer','opengl');
-% set(get(gca,'child'),'FaceColor','interp','CDataMode','auto');
-
-% figure(10)                              % Plot histogram of time-of-arrival vs. power
-% [N,X] = hist(travel_distance,100);
-% pwr_rx_hist = N.*exp(-a.*X);
-% stem(X/(3e8/n_water),pwr_rx_hist/sum(total_rec_power))   
-% xlabel('Time of arrival (sec)')
-% ylabel('Percentage of power')
-
-% distance_delta = max(X) - min(X);
-% time_delta = distance_delta/(3e8/n_water);
-% T = mean(X(2:end) - X(1:end-1))/(3e8/n_water); % Effective "sampling rate" of the histogram
-% bandwidth = 1/T;                                % Normalized frequency in Hz
-% 
-%  figure(7)
-% freqz(N/sum(total_rec_packets),[1],512,bandwidth)      %% plot a frequency response from the histogram data
-
-% figure(9)                           %% Scatter plot of photons on RX plane
-% scatter(rec_loc(:,1),rec_loc(:,2))
-
-% figure(1)
-% scatter(photon(:,1),photon(:,2),50,log10(photon(:,6)),'.')
-% xlim([-20 150]);
-% ylim([-120 120]);
-% xlabel('x-axis (m)')
-% xlabel('y-axis (m)')
 % 
 % figure(4)
 % scatter3(photon(:,1),photon(:,2),photon(:,3),50,log10(photon(:,6)),'.')
@@ -304,15 +242,6 @@ end
 % ylabel('y-axis (m)')
 % zlabel('z-axis (m)')
 
-
-% figure(3);
-% hist(photon(:,1),max(photon(:,1)));
-
-
-% figure(2)
-% hist(totaldist,20);
-% figure(3)
-% hist(photon(:,4),20)
 findfigs
 
 sprintf('Simulation on DATE with %d photons, %d scattering events.', num_photons*num_sims, scattering_events)
@@ -351,7 +280,7 @@ if (strcmp(sendEmail,'true'))
        
     % Define these variables appropriately:
     mail = 'wccoxresearch@gmail.com'; %Your GMail email address
-    password = ''; %Your GMail password
+    load password.mat
 
     % Then this code will set up the preferences properly:
     setpref('Internet','E_mail',mail);

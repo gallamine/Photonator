@@ -61,20 +61,32 @@ if strcmp(func_type,'measured')
         
     elseif strcmp(water_cond,'petzold_maalox')    
         
-        load petzold_maalox_data_orig
+        load petzold_data_maalox_orig   
         %petzold_angle = [0.1:0.05:180]';
+        angle_water = [0;angle_water];
+        scatter_water = [scatter_water(1);scatter_water];
         cdf_scatter = cumtrapz(angle_water,scatter_water.*sind(angle_water));
         %cdf_scatter = interp1(angle_water,cdf_scatter,petzold_angle);
         cdf_scatter = cdf_scatter ./ max(cdf_scatter);
         petzold_angle_rad = angle_water.*pi./180;
+        
+    elseif strcmp(water_cond,'widemann_maalox')
+        load widemann_maalox
+        cdf_scatter = cumtrapz(widemann_maalox(:,1),widemann_maalox(:,2).*sin(widemann_maalox(:,1)));
+        cdf_scatter = cdf_scatter ./ max(cdf_scatter);
+        petzold_angle_rad = widemann_maalox(:,1);
     
         
     elseif strcmp(water_cond,'mie_1_micron')
-        
-        load('Berrocal\mieVSF1micron') 
-        cdf_scatter = cumtrapz(degtorad(sphereAngles),sind(sphereAngles).*mieVSF1micron);
+        if (isunix()) 
+            load('Berrocal/mieVSF1micron') 
+        else
+            load('Berrocal\mieVSF1micron') 
+        end
+        sphereAngles = sphereAngles.*pi./180;
+        cdf_scatter = cumtrapz(sphereAngles,sin(sphereAngles).*mieVSF1micron);
         cdf_scatter = cdf_scatter ./ max(cdf_scatter);
-        petzold_angle_rad = sphereAngles.*pi./180;
+        petzold_angle_rad = sphereAngles;
     end
 
 elseif strcmp(func_type,'calc')

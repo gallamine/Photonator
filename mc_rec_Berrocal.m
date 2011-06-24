@@ -32,6 +32,10 @@ nWaterWindow = nWater/nWindow;
 nWindowAir = nWindow/nAir;
 
 critAngSine = nAir/nWater;             % sine T1 = nair/nwater sine T3
+
+
+recPosX = zeros(1,num_photons);
+recPosY = zeros(1,num_photons);
    
 for i = 1:num_photons                   % iterate over every photon on receiver plane
    ph_x = rec_loc_final(i,1);
@@ -116,6 +120,9 @@ end
 
 
 for j = 1:num_rx
+    
+    recPosX = recPosX(1:ph_cnt(j));
+    recPosY = recPosY(1:ph_cnt(j));
     
     weight_var(j) = (weight_var(j) + weight_mean(j).^2*(ph_cnt(j).*(numTxPhotons - ph_cnt(j))/numTxPhotons)) / (numTxPhotons - 1);
     weight_mean(j) = ph_cnt(j)*weight_mean(j) / numTxPhotons;
