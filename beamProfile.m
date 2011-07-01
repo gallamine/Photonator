@@ -2,7 +2,7 @@ function [x,y,uz]  = beamProfile(n,sd,diverg,~)
 
 randVals = rand(n,1);
 
-r = sqrt(-log(randVals).*(2*sd^2));
+r = sqrt(-log(randVals).*(sd^2)/2);
 ang = (2*pi).* rand(n,1);
 divAng = diverg .* rand(n,1);
 

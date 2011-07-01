@@ -16,13 +16,11 @@ ph_cnt = zeros(1,num_rx);
 power = zeros(1,num_rx);
 
 angle_mean = zeros(1,num_rx);   % mean of the incident angle for each Rx
-angle_sqravg = zeros(1,num_rx); % E[uz^2]
 angle_var = zeros(1,num_rx);    % variance of incident angle for each Rx
 dist_mean = zeros(1,num_rx);    % Mean distance traveled for each Rx
-dist_sqravg = zeros(1,num_rx);  % E[dist^2]
+
 dist_var = zeros(1,num_rx);     % Variance of dist traveled for each Rx
 weight_mean = zeros(1,num_rx);    % Mean weight for each Rx
-weight_sqravg = zeros(1,num_rx);    %E[W^2] 
 weight_var = zeros(1,num_rx);     % Variance of weight for each Rx
 
 distances =  zeros(1,num_photons);       % Distances from photon to 0,0 point - Initailize to full size, crop at end
@@ -41,7 +39,7 @@ nWindowAir = nWindow/nAir;
 critAngSine = nAir/nWater;             % sine T1 = nair/nwater sine T3
 
 if (num_rx > 1)
-    error('You need to change how the distance array is stored!');
+    disp('You need to change how the distance array is stored!');
 end
    
 for i = 1:num_photons                   % iterate over every photon on receiver plane
@@ -114,9 +112,11 @@ for i = 1:num_photons                   % iterate over every photon on receiver 
           dist_var(j) = dist_var(j) + dist_delta*(ph_dist - dist_mean(j));    
           weight_var(j) = weight_var(j) + weight_delta*(rec_weights(i) - weight_mean(j));
           
-          distances(ph_cnt(j)) = distance;
-          angles(ph_cnt(j)) = mu_z;
-          weights(ph_cnt(j)) = rec_weights(i);
+          if (num_rx == 1)
+              distances(ph_cnt(j)) = distance;
+              angles(ph_cnt(j)) = mu_z;
+              weights(ph_cnt(j)) = rec_weights(i);
+          end
        end       
    end
 end
@@ -125,9 +125,11 @@ end
 
 for j = 1:num_rx
     
-    distances = distances(1:ph_cnt(j));
-    angles = angles(1:ph_cnt(j));
-    weights = weights(1:ph_cnt(j));
+    if (num_rx == 1)
+        distances = distances(1:ph_cnt(j));
+        angles = angles(1:ph_cnt(j));
+        weights = weights(1:ph_cnt(j));
+    end
     
     weight_var(j) = (weight_var(j) + weight_mean(j).^2*(ph_cnt(j).*(numTxPhotons - ph_cnt(j))/numTxPhotons)) / (numTxPhotons - 1);
     weight_mean(j) = ph_cnt(j)*weight_mean(j) / numTxPhotons;
@@ -139,29 +141,29 @@ for j = 1:num_rx
         power(j)
     end
     
-    if ph_cnt(j) > 1
-        angle_var(j) =  (1./(ph_cnt(j)-1)).*angle_var(j);
-        dist_var(j) = (1./(ph_cnt(j)-1)).*dist_var(j);
-    end
-    
-    if isnan(angle_var(j))
-        disp('angle_var(j) is NaN (in correction loop)');
-    end
-    if isnan(dist_var(j))
-        disp('dist_var(j) is NaN (in correction loop)');
-    end
-    if isnan(weight_var(j))
-        disp('weight_var(j) is NaN (in correction loop)');
-    end
-    if isinf(angle_var(j))
-        disp('angle_var(j) is Inf');
-    end
-    if isinf(dist_var(j))
-        disp('dist_var(j) is Inf');
-    end
-    if isinf(weight_var(j))
-        disp('weight_var(j) is Inf');
-    end
+%     if ph_cnt(j) > 1
+%         angle_var(j) =  (1./(ph_cnt(j)-1)).*angle_var(j);
+%         dist_var(j) = (1./(ph_cnt(j)-1)).*dist_var(j);
+%     end
+%     
+%     if isnan(angle_var(j))
+%         disp('angle_var(j) is NaN (in correction loop)');
+%     end
+%     if isnan(dist_var(j))
+%         disp('dist_var(j) is NaN (in correction loop)');
+%     end
+%     if isnan(weight_var(j))
+%         disp('weight_var(j) is NaN (in correction loop)');
+%     end
+%     if isinf(angle_var(j))
+%         disp('angle_var(j) is Inf');
+%     end
+%     if isinf(dist_var(j))
+%         disp('dist_var(j) is Inf');
+%     end
+%     if isinf(weight_var(j))
+%         disp('weight_var(j) is Inf');
+%     end
 
 end
 

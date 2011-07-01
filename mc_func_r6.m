@@ -31,12 +31,14 @@ function [total_time,total_rec_power,total_rec_packets,rec_loc_final,total_rec_d
 
 useLimits = 'true';
 
+sizeMult = 3;
+
 if strcmp(useLimits,'true')
-    xLimMax = 0.61;
-    xLimMin = -.61;
-    yLimMax = 0.61;
-    yLimMin = -.61;
-    zLimMax = 3.66;
+    xLimMax = 0.61*sizeMult;
+    xLimMin = -.61*sizeMult;
+    yLimMax = 0.61*sizeMult;
+    yLimMin = -.61*sizeMult;
+    zLimMax = receiver_z;
     zLimMin = 0;
 end
 
@@ -55,8 +57,11 @@ rouletteConst_inv = 1/rouletteConst;
 inv_c = 1/c;
 inv_b = 1/(c-a);
 
-min_power = 1e-4;                   % minimum power value for photons before they are terminated by rouletting
-
+if prob_of_survival == 0.95
+    min_power = 1e-4;                   % minimum power value for photons before they are terminated by rouletting
+elseif prob_of_survival == 0.83
+    min_power = 1e-5;  
+end
 max_uz = 0.99999;
 
 tic;
