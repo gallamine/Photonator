@@ -30,16 +30,26 @@ function [total_time,total_rec_power,total_rec_packets,rec_loc_final,total_rec_d
     cdf_scatter,angle,init_angle,init_angle2,beamDiverg,beamWidth)
 
 useLimits = 'true';
+reflection = 1;
 
-sizeMult = 3;
+sizeMult = 1;
 
 if strcmp(useLimits,'true')
+%     xLimMax = 0.61*sizeMult;
+%     xLimMin = -.61*sizeMult;
+%     yLimMax = 0.61*sizeMult;
+%     yLimMin = -.61*sizeMult;
+%     zLimMax = receiver_z;
+%     zLimMin = 0;
+
+    % Actual tank dimensions from exp in 7_11
     xLimMax = 0.61*sizeMult;
     xLimMin = -.61*sizeMult;
-    yLimMax = 0.61*sizeMult;
-    yLimMin = -.61*sizeMult;
+    yLimMax = 0.1905*sizeMult;
+    yLimMin = -.5842*sizeMult;
     zLimMax = receiver_z;
     zLimMin = 0;
+    
 end
 
 photon = zeros(num_photons,8);
@@ -55,12 +65,16 @@ prob_of_survival = ((c-a)/c);       % b/c
 rouletteConst = 10;                 % 1/rouletteConst determines the probability of a low power photon surviving
 rouletteConst_inv = 1/rouletteConst;
 inv_c = 1/c;
-inv_b = 1/(c-a);
 
-if prob_of_survival == 0.95
+
+if prob_of_survival >= 0.90
     min_power = 1e-4;                   % minimum power value for photons before they are terminated by rouletting
-elseif prob_of_survival == 0.83
+elseif prob_of_survival >= 0.8299
     min_power = 1e-5;  
+elseif prob_of_survival >= 0.70
+    min_power = 1e-5;  
+else
+    min_power = 1e-7;
 end
 max_uz = 0.99999;
 
@@ -72,12 +86,12 @@ tic;
 % beta = init_angle;   % direction the transmitter is pointing (zenith)
 % alpha = init_angle2;     % direction the transmitter is pointing (azmuth)
 
-[photon(:,1),photon(:,2),photon(:,6)] = beamProfile(num_photons,beamWidth,beamDiverg,'gaussian');
+% [photon(:,1),photon(:,2),photon(:,4),photon(:,5),photon(:,6)] = beamProfile(num_photons,beamWidth,beamDiverg,'gaussian');
 
 % point down z-axis
 photon(:,4) = zeros(num_photons,1);        % x - 0
 photon(:,5) = zeros(num_photons,1);        % y - 0
-% photon(:,6) = ones(num_photons,1);         % z - 1
+photon(:,6) = ones(num_photons,1);         % z - 1
 photonsRemaining = num_photons;             % count down for each photon received/terminated
 
 clear theta phi x y z beta alpha
@@ -165,7 +179,17 @@ while photonsRemaining > 0                      % which is faster? create random
                 photon(i,2) = photon(i,2) + y_step;         % move to new y position                        
                 photon(i,3) = photon(i,3) + z_step;         % move to new z position
                 
-                if ((photon(i,1) > xLimMax) || (photon(i,1) < xLimMin) || (photon(i,2) > yLimMax) || (photon(i,2) < yLimMin) || (photon(i,3) < zLimMin))
+                if (photon(i,2) > yLimMax)                    % If the photon leaves the top of the volume, reflect downwards
+                    if (reflection == 1)                        % Check to make sure we're using reflection in our simulation (top boundary)
+                        photon(i,5) = -1*photon(i,5);               % reflect the light beam by flipping the sign of the mu_y vector
+                        % X and Z position stay the same
+                        photon(i,2) = yLimMax - (photon(i,2) - yLimMax);      % New y_pos is Y-Max - (Y_pos - Ymax). Remove the part that "sticks out" of the top of the surface.
+                    else    % If we are using reflection, terminate the photon just like below
+                        photon(i,8) = -1;                           % mark as terminated
+                        photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
+                    end
+                    
+                elseif ((photon(i,1) > xLimMax) || (photon(i,1) < xLimMin)  || (photon(i,2) < yLimMin) || (photon(i,3) < zLimMin))
                     photon(i,8) = -1;                           % mark as terminated
                     photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
                 else 	% if the photon is still in the boundaries                      
@@ -195,6 +219,15 @@ while photonsRemaining > 0                      % which is faster? create random
                         photon(i,6) = (-sin(theta)*cos(phi))*sqrt_uz + old_uz*cos(theta);                                    % uz
                         %disp('mu_z less than 1')
                     end
+                    
+                    if abs(1 - (photon(i,4)^2 + photon(i,5)^2 + photon(i,6)^2)) > 1e-11
+                        normLength = sqrt(photon(i,4)^2 + photon(i,5)^2 + photon(i,6)^2);
+                        photon(i,4) = photon(i,4) / normLength;
+                        photon(i,5) = photon(i,5) / normLength;
+                        photon(i,6) = photon(i,6) / normLength;
+                        %disp('Vector normalization wrong!');
+                    end
+                    
                 end
                 % update the total distance the photon has traveled 
                 totaldist(i) = totaldist(i) + r;
