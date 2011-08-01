@@ -59,6 +59,15 @@ if strcmp(func_type,'measured')
         %petzold_angle_rad = petzold_angle.*pi./180;
         petzold_angle_rad = maalox_angle.*pi./180;
         
+    elseif strcmp(water_cond,'maalox_alan_orig')
+               
+        load maalox_alan_orig
+        cdf_scatter = cumtrapz(maalox_angle,maalox_vsf.*sind(maalox_angle));       
+        %cdf_scatter = interp1(maalox_angle,cdf_scatter,petzold_angle);
+        cdf_scatter = cdf_scatter ./ max(cdf_scatter);
+        %petzold_angle_rad = petzold_angle.*pi./180;
+        petzold_angle_rad = maalox_angle.*pi./180;
+        
     elseif strcmp(water_cond,'petzold_maalox')    
         
         load petzold_data_maalox_orig   

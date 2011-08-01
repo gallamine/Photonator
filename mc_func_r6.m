@@ -68,7 +68,8 @@ inv_c = 1/c;
 
 
 if prob_of_survival >= 0.90
-    min_power = 1e-4;                   % minimum power value for photons before they are terminated by rouletting
+%     min_power = 1e-4;                   % minimum power value for photons before they are terminated by rouletting
+        min_power = 0.5
 elseif prob_of_survival >= 0.8299
     min_power = 1e-5;  
 elseif prob_of_survival >= 0.70
@@ -76,7 +77,7 @@ elseif prob_of_survival >= 0.70
 else
     min_power = 1e-7;
 end
-max_uz = 0.99999;
+max_uz = 1-1e-12;
 
 tic;
 % 
@@ -86,12 +87,12 @@ tic;
 % beta = init_angle;   % direction the transmitter is pointing (zenith)
 % alpha = init_angle2;     % direction the transmitter is pointing (azmuth)
 
-% [photon(:,1),photon(:,2),photon(:,4),photon(:,5),photon(:,6)] = beamProfile(num_photons,beamWidth,beamDiverg,'gaussian');
+[photon(:,1),photon(:,2),photon(:,4),photon(:,5),photon(:,6)] = beamProfile(num_photons,beamWidth,beamDiverg,'gaussian');
 
-% point down z-axis
-photon(:,4) = zeros(num_photons,1);        % x - 0
-photon(:,5) = zeros(num_photons,1);        % y - 0
-photon(:,6) = ones(num_photons,1);         % z - 1
+% % point down z-axis
+% photon(:,4) = zeros(num_photons,1);        % x - 0
+% photon(:,5) = zeros(num_photons,1);        % y - 0
+% photon(:,6) = ones(num_photons,1);         % z - 1
 photonsRemaining = num_photons;             % count down for each photon received/terminated
 
 clear theta phi x y z beta alpha
@@ -159,9 +160,9 @@ while photonsRemaining > 0                      % which is faster? create random
 
                 rec_loc(i,1) = photon(i,1) + x_dist_rec_intersection;   % x-axis location of reception
                 rec_loc(i,2) = photon(i,2) + y_dist_rec_intersection;    % y-axis location of reception
-                rec_loc(i,3) = photon(i,4);                             % incident angle (mu_x)
+                rec_loc(i,3) = photon(i,4);                             % for statistics, should be uniform (mu_x)
                 rec_loc(i,4) = photon(i,5);                             % for statistics, should be uniform (mu_y)
-                rec_loc(i,5) = photon(i,6);                             % for statistics, should be uniform (mu_z)
+                rec_loc(i,5) = photon(i,6);                             % incident angle, mu_z
 
                 total_rec_packets = total_rec_packets + 1;
                 total_rec_power = total_rec_power + photon(i,7);        % total power at the receiver plane (sum of received photons)

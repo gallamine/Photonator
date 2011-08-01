@@ -7,6 +7,10 @@
 % clear all
 % clc
 
+% Set the random stream seed to something ... wait for it ... random
+RandStream.setDefaultStream ...
+     (RandStream('mt19937ar','seed',sum(100*clock)));
+
 if (isunix())
     userData = urlread('http://169.254.169.254/latest/user-data');
     if (~strcmp(userData,'autorun_sim'))
@@ -39,7 +43,7 @@ if (isunix())
     dataDir = '/home/wccox/';
     simDir = '/home/wccox/Dropbox/WCC Research/mc';
 else
-    dataDir = 'C:\Users\wccox\Documents\ThesisData\TankSimulations';
+    dataDir = 'C:\Users\wccox\Documents\ThesisData\TankSimulations\RoundTwo';
     simDir = 'C:\Users\wccox\Dropbox\WCC Research\mc';
 end
 
@@ -49,27 +53,27 @@ saveOutput = 'true';                % Save the output data to a folder
 ftpData = 'false';                  % FTP data back to FTP server at conclusion of simulation
 
 num_photons = 1e6;                  % number of photons simulated per batch/group
-num_sims = 2000;                      % number of groups to simulate
+num_sims = 250;                      % number of groups to simulate
 n_water = 1.33;                     % index of refraction of water
 n_window = 1.585;                   % index of refraction of polycarbonate
 
 diverg = 0;
 
-% [cdf_scatter,angle] = generate_scatter('measured','maalox_alan');
-[cdf_scatter,angle] = generate_scatter('measured','petzold_maalox');
-% [cdf_scatter,angle] = generate_scatter('measured','widemann_maalox');
+% [cdf_scatter,angle] = generate_scatter('measured','maalox_alan_orig');
+% [cdf_scatter,angle] = generate_scatter('measured','petzold_maalox');
+[cdf_scatter,angle] = generate_scatter('measured','widemann_maalox');
 % [cdf_scatter,angle] = generate_scatter('measured','petzold_avg');
+% [cdf_scatter,angle] = generate_scatter('measured','mie_1_micron');
 
 
 % albedo = (c-a)/c;   % Water albedo is scattering coef./atten. coef. (b/c unitless)
-albedo = 0.83;          % Albedo of Maalox (ranges from 0.8 to 0.95) - IF YOU CHANGE THIS, BE SURE TO CHANGE THE MINIMUM POWER VALUE!!!
+albedo = 0.95;          % Albedo of Maalox (ranges from 0.8 to 0.95) - IF YOU CHANGE THIS, BE SURE TO CHANGE THE MINIMUM POWER VALUE!!!
 
-c = 9.28962;
+c = 3.278688525;
 b = c * albedo;
 a = c - b;
 
-%beamDiverg = 0.0015;                       %(0.01)*pi/180;           %degtorad(0.01);
-beamDiverg = 0;
+beamDiverg = 0.0015;                       %(0.01)*pi/180;           %degtorad(0.01);
 beamWidth = 0.001;                  % 1.6 mm (half width). Hecht pg. 595
 
 rec_pos = [0,0];

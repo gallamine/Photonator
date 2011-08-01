@@ -5,10 +5,10 @@
 % separated.
 
 if (isunix()) 
-    dataDirectory = '/home/wccox/outputData-20-45-30_2011-07-20';
+    dataDirectory = '/home/wccox/outputData-21-28-40_2011-07-27';
 else
     disp('Windows');
-    dataDirectory = 'C:\Users\wccox\Documents\ThesisData\TankSimulations\outputData-19-31-09_2011-07-21'; 
+    dataDirectory = 'C:\Users\wccox\Documents\ThesisData\TankSimulations\RoundTwo\outputData-16-48-44_2011-07-29'; 
 end
 
 % a = 0.396;
@@ -19,14 +19,20 @@ file_list = dir(fullfile(dataDirectory,'*outputData*.mat'));
 
 num_sims = size(file_list,1);
 
-% rec_fov = [3;6;18;27;45;90;130;180;3;6;18;27;45;90;130;180].*pi./180;
-rec_fov = [1;4;5;6;1;4;5;6].*pi./180;
-sizeRecPos = size(rec_fov);
-num_rx = sizeRecPos(1);
+% % rec_fov = [3;6;18;27;45;90;130;180;3;6;18;27;45;90;130;180].*pi./180;
+% rec_fov = [1;4;5;6;1;4;5;6].*pi./180;
+% sizeRecPos = size(rec_fov);
+% num_rx = sizeRecPos(1);
+% 
+% rec_pos = zeros(num_rx,2);
+% % rec_aperture = [ones(num_rx/2,1).*0.0508; ones(num_rx/2,1).*0.1016];
+% rec_aperture = [ones(num_rx/2,1).*0.0508; ones(num_rx/2,1).*0.0254];
 
-rec_pos = zeros(num_rx,2);
-% rec_aperture = [ones(num_rx/2,1).*0.0508; ones(num_rx/2,1).*0.1016];
-rec_aperture = [ones(num_rx/2,1).*0.0508; ones(num_rx/2,1).*0.0254];
+
+rec_fov = 26*pi/180;                
+num_rx = 1;
+rec_pos = [0,0];
+rec_aperture = 0.0508;
 
 
 angleVarSum = zeros(num_rx,1);
@@ -56,7 +62,7 @@ parfor simcount = 1:num_sims
     
 %======================= CODE FOR RECEIVER ================================    
     [power,ph_cnt,angle_mean,angle_var,dist_mean,dist_var,weight_mean,weight_var,reflected] ...
-        = mc_rec_r4(a,S.varargin{4},S.varargin{5},S.varargin{6},rec_pos,rec_aperture,rec_fov,num_photons); 
+        = mc_rec_r5(a,S.varargin{4},S.varargin{5},S.varargin{6},rec_pos,rec_aperture,rec_fov,num_photons); 
     
     total_power = total_power + power';                             % Vectorized sum of the weights of received photons (sum received photons weights over all groupings)
     total_photons = total_photons + ph_cnt';                        % Vectorized sum of number of photons
