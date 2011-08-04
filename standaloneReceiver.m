@@ -5,10 +5,10 @@
 % separated.
 
 if (isunix()) 
-    dataDirectory = '/home/wccox/outputData-21-28-40_2011-07-27';
+    dataDirectory = '/home/wccox/outputData-21-31-43_2011-08-03';
 else
     disp('Windows');
-    dataDirectory = 'C:\Users\wccox\Documents\ThesisData\TankSimulations\RoundTwo\outputData-16-48-44_2011-07-29'; 
+    dataDirectory = 'C:\Users\wccox\Documents\ThesisData\TankSimulations\RoundTwo\outputData-20-30-56_2011-08-02'; 
 end
 
 % a = 0.396;

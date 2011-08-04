@@ -53,7 +53,7 @@ saveOutput = 'true';                % Save the output data to a folder
 ftpData = 'false';                  % FTP data back to FTP server at conclusion of simulation
 
 num_photons = 1e6;                  % number of photons simulated per batch/group
-num_sims = 250;                      % number of groups to simulate
+num_sims = 500;                     % number of groups to simulate
 n_water = 1.33;                     % index of refraction of water
 n_window = 1.585;                   % index of refraction of polycarbonate
 
@@ -69,12 +69,15 @@ diverg = 0;
 % albedo = (c-a)/c;   % Water albedo is scattering coef./atten. coef. (b/c unitless)
 albedo = 0.95;          % Albedo of Maalox (ranges from 0.8 to 0.95) - IF YOU CHANGE THIS, BE SURE TO CHANGE THE MINIMUM POWER VALUE!!!
 
-c = 3.278688525;
+c = 6.830601;
 b = c * albedo;
 a = c - b;
 
 beamDiverg = 0.0015;                       %(0.01)*pi/180;           %degtorad(0.01);
 beamWidth = 0.001;                  % 1.6 mm (half width). Hecht pg. 595
+
+% beamDiverg = 0;
+% beamWidth = 0;
 
 rec_pos = [0,0];
 

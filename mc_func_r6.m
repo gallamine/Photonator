@@ -32,6 +32,10 @@ function [total_time,total_rec_power,total_rec_packets,rec_loc_final,total_rec_d
 useLimits = 'true';
 reflection = 1;
 
+nAir = 1;
+nWater = 1.33;
+surfCritAngCos = sqrt(1 - (nAir/nWater)^2);             % sine T1 = nair/nwater sine T3
+
 sizeMult = 1;
 
 if strcmp(useLimits,'true')
@@ -68,8 +72,8 @@ inv_c = 1/c;
 
 
 if prob_of_survival >= 0.90
-%     min_power = 1e-4;                   % minimum power value for photons before they are terminated by rouletting
-        min_power = 0.5
+    min_power = 1e-4;                   % minimum power value for photons before they are terminated by rouletting
+    %min_power = 0.5
 elseif prob_of_survival >= 0.8299
     min_power = 1e-5;  
 elseif prob_of_survival >= 0.70
@@ -106,10 +110,10 @@ while photonsRemaining > 0                      % which is faster? create random
     % whether it was received or not.
     for i = 1:num_photons
         
-        % if photon hasn't been received
+        % if the photon is still active (1 - active, 0 - received, -1 - terminated
         if (photon(i,8) == 1)
         
-             r = -inv_c*log(rand_array(i,1));     % randomly generate optical path length      
+            r = -inv_c*log(rand_array(i,1));     % randomly generate optical path length      
 
             %Generate scattering angle from beam spread function
             minIndex = 2;
@@ -141,7 +145,9 @@ while photonsRemaining > 0                      % which is faster? create random
             z_step = r*photon(i,6);  % z step size
                 
 
-            % if the photon moves past the receiver plane
+            % if the photon moves past the receiver plane <- photons that
+            % should be reflected are not counted properly (i.e. they
+            % aren't reflected before being received)
             if ((photon(i,3) + z_step) >= receiver_z)
           
                 if photon(i,6) ~= 0                         % If the photon has a z-component, mu_z != 0
@@ -180,19 +186,60 @@ while photonsRemaining > 0                      % which is faster? create random
                 photon(i,2) = photon(i,2) + y_step;         % move to new y position                        
                 photon(i,3) = photon(i,3) + z_step;         % move to new z position
                 
-                if (photon(i,2) > yLimMax)                    % If the photon leaves the top of the volume, reflect downwards
-                    if (reflection == 1)                        % Check to make sure we're using reflection in our simulation (top boundary)
-                        photon(i,5) = -1*photon(i,5);               % reflect the light beam by flipping the sign of the mu_y vector
-                        % X and Z position stay the same
-                        photon(i,2) = yLimMax - (photon(i,2) - yLimMax);      % New y_pos is Y-Max - (Y_pos - Ymax). Remove the part that "sticks out" of the top of the surface.
-                    else    % If we are using reflection, terminate the photon just like below
-                        photon(i,8) = -1;                           % mark as terminated
-                        photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
+                 % update the total distance the photon has traveled 
+                totaldist(i) = totaldist(i) + r;
+                
+                if (reflection == 1)                        % Check to make sure we're using reflection in our simulation (perfect reflectors)
+                    % While any of the boundaries are exceeded, reflect
+                    % around that boundary. Keep doing this till the photon
+                    % is contained in the boundaries.
+                    while ((photon(i,1) > xLimMax) || (photon(i,1) < xLimMin)  || (photon(i,2) > yLimMax) || (photon(i,2) < yLimMin))
+                        if (photon(i,2) > yLimMax)                    % If the photon leaves the top of the volume, reflect downwards
+                            
+                           if (photon(i,5) < surfCritAngCos)    % TOTAL INTERNAL REFLECTION
+                                photon(i,5) = -1*photon(i,5);               % reflect the light beam by flipping the sign of the mu_y vector
+                                photon(i,2) = yLimMax - (photon(i,2) - yLimMax);      % New y_pos is Y-Max - (Y_pos - Ymax). Remove the part that "sticks out" of the top of the surface.
+                           else            % OTHERWISE, Lose power out the top                    
+                               % Calculate fresnel loss
+                               cosExitAng = sqrt(1 - (nWater/nAir)^2*(1-photon(i,5)^2));
+                               rp = (photon(i,5) - nWater*cosExitAng)/(photon(i,5) + nWater*cosExitAng); 	% Thanks to -> Small Monte Carlo by Scott Prahl (http://omlc.ogi.edu)
+                               rs = (cosExitAng - nWater*photon(i,5))/(cosExitAng + nWater*photon(i,5));
+                               R = (rp^2 + rs^2)/2;                                                     % unpolarized reflection coefficient
+                               photon(i,7) = photon(i,7)*R;                 % Reduce the photon weight        
+
+                                photon(i,5) = -1*photon(i,5);               % reflect the light beam by flipping the sign of the mu_y vector
+                                % X and Z position stay the same
+                                photon(i,2) = yLimMax - (photon(i,2) - yLimMax);      % New y_pos is Y-Max - (Y_pos - Ymax). Remove the part that "sticks out" of the top of the surface.
+                           end
+                       elseif (photon(i,2) < yLimMin)                  % Leaves the bottom of the container
+%                             photon(i,5) = -1*photon(i,5);               % reflect the light beam by flipping the sign of the mu_y vector
+%                             photon(i,2) = yLimMin - (photon(i,2) - yLimMin);
+                            photon(i,8) = -1;                           % mark as terminated
+                            photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
+                            break;
+                        end
+                        
+                        if (photon(i,1) < xLimMin)                   % Leaves the side of the container
+%                             photon(i,4) = -1*photon(i,4);               % reflect the light beam by flipping the sign of the mu_x vector
+%                             photon(i,1) = xLimMin - (photon(i,1) - xLimMin);
+                            photon(i,8) = -1;                           % mark as terminated
+                            photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
+                            break;
+                        elseif (photon(i,1) > xLimMax)                  % Leaves the side of the container
+%                             photon(i,4) = -1*photon(i,4);               % reflect the light beam by flipping the sign of the mu_x vector
+%                             photon(i,1) = xLimMax - (photon(i,1) - xLimMax);
+                            photon(i,8) = -1;                           % mark as terminated
+                            photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
+                            break;
+                        end
                     end
+                end                                    
                     
-                elseif ((photon(i,1) > xLimMax) || (photon(i,1) < xLimMin)  || (photon(i,2) < yLimMin) || (photon(i,3) < zLimMin))
+                % If the photon collides with the back wall, terminate
+                if (photon(i,3) < zLimMin)
                     photon(i,8) = -1;                           % mark as terminated
                     photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
+                    continue;
                 else 	% if the photon is still in the boundaries                      
                
                     photon(i,7) = photon(i,7)*prob_of_survival;     % reduce weight
@@ -218,21 +265,17 @@ while photonsRemaining > 0                      % which is faster? create random
                         photon(i,4) = (sin(theta)/sqrt_uz)*(old_ux*old_uz*cos(phi) - old_uy*sin(phi)) + old_ux*cos(theta);   % ux
                         photon(i,5) = (sin(theta)/sqrt_uz)*(old_uy*old_uz*cos(phi) + old_ux*sin(phi)) + old_uy*cos(theta);   % uy
                         photon(i,6) = (-sin(theta)*cos(phi))*sqrt_uz + old_uz*cos(theta);                                    % uz
-                        %disp('mu_z less than 1')
                     end
                     
+                    % Normalize the pointing vectors -> ux^2 + uy^2 + uz^2 = 1^2
                     if abs(1 - (photon(i,4)^2 + photon(i,5)^2 + photon(i,6)^2)) > 1e-11
                         normLength = sqrt(photon(i,4)^2 + photon(i,5)^2 + photon(i,6)^2);
                         photon(i,4) = photon(i,4) / normLength;
                         photon(i,5) = photon(i,5) / normLength;
                         photon(i,6) = photon(i,6) / normLength;
                         %disp('Vector normalization wrong!');
-                    end
-                    
+                    end                    
                 end
-                % update the total distance the photon has traveled 
-                totaldist(i) = totaldist(i) + r;
-
             end
         end
     end
