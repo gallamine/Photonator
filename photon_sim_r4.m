@@ -53,26 +53,29 @@ saveOutput = 'true';                % Save the output data to a folder
 ftpData = 'false';                  % FTP data back to FTP server at conclusion of simulation
 
 num_photons = 1e6;                  % number of photons simulated per batch/group
-num_sims = 500;                     % number of groups to simulate
+num_sims = 150;                     % number of groups to simulate
 n_water = 1.33;                     % index of refraction of water
 n_window = 1.585;                   % index of refraction of polycarbonate
 
 diverg = 0;
-
+g = 0.94;
+wallReflect = 1;
 % [cdf_scatter,angle] = generate_scatter('measured','maalox_alan_orig');
 % [cdf_scatter,angle] = generate_scatter('measured','petzold_maalox');
-[cdf_scatter,angle] = generate_scatter('measured','widemann_maalox');
+% [cdf_scatter,angle] = generate_scatter('measured','widemann_maalox');
 % [cdf_scatter,angle] = generate_scatter('measured','petzold_avg');
 % [cdf_scatter,angle] = generate_scatter('measured','mie_1_micron');
+[cdf_scatter,angle] = generate_scatter('calc','hg',g);
 
 
 % albedo = (c-a)/c;   % Water albedo is scattering coef./atten. coef. (b/c unitless)
-albedo = 0.95;          % Albedo of Maalox (ranges from 0.8 to 0.95) - IF YOU CHANGE THIS, BE SURE TO CHANGE THE MINIMUM POWER VALUE!!!
+albedo = 0.92;          % Albedo of Maalox (ranges from 0.8 to 0.95) - IF YOU CHANGE THIS, BE SURE TO CHANGE THE MINIMUM POWER VALUE!!!
+receiver_z = 3.66;                     % Z position of the receiver (in meters)
 
-c = 6.830601;
+c = 25/receiver_z;
 b = c * albedo;
 a = c - b;
-
+wallAbsorption = 0.5;               % Photons lose half their weight when colliding with a wall
 beamDiverg = 0.0015;                       %(0.01)*pi/180;           %degtorad(0.01);
 beamWidth = 0.001;                  % 1.6 mm (half width). Hecht pg. 595
 
@@ -91,19 +94,6 @@ rec_fov = ones(num_rx,1).* pi./2;
 % rec_fov = ones(num_rx,1).*0.314159;     % 0.314159 = 18 deg FOV; ;  % 0.0508 m = 2 inches
 % rec_fov = [2.27, 0.0785, 0.1745];     % 0.314159 = 18 deg FOV, 2.27 = 130 deg, 0.0785 = 5 deg
 
-receiver_z = 3.66;                     % Z position of the receiver (in meters)
-
-% Diameter of aperture (in meters): 
-% 0.0508m = 2"
-% 0.0079m = OP 2 VIS diameter (7.9 mm)
-
-% Field of view (in radians)
-% 3 deg. -> 0.0523
-% 4.5 deg -> 0.0785 rad
-% 10 deg -> 0.1745
-% 18 deg -> 0.314259 rad
-% 95 deg -> 1.6581
-% 130 deg -> 2.269 rad
 
 attenLen = round(receiver_z*c);
                                         
@@ -187,7 +177,8 @@ parfor simcount = 1:num_sims
     angle,...
     init_angle,...
     init_angle2,...
-    beamDiverg,beamWidth);
+    beamDiverg,beamWidth,...
+    wallAbsorption);
 
     totalPhotonsAtRxPlane = totalPhotonsAtRxPlane + total_rec_packets;
     

@@ -27,7 +27,7 @@
 
 function [total_time,total_rec_power,total_rec_packets,rec_loc_final,total_rec_dist,rec_weights] = ...
     mc_func_r6(num_photons,scattering_events,c,a,receiver_z,...
-    cdf_scatter,angle,init_angle,init_angle2,beamDiverg,beamWidth)
+    cdf_scatter,angle,init_angle,init_angle2,beamDiverg,beamWidth,wallAbsorption)
 
 useLimits = 'true';
 reflection = 1;
@@ -212,24 +212,27 @@ while photonsRemaining > 0                      % which is faster? create random
                                 photon(i,2) = yLimMax - (photon(i,2) - yLimMax);      % New y_pos is Y-Max - (Y_pos - Ymax). Remove the part that "sticks out" of the top of the surface.
                            end
                        elseif (photon(i,2) < yLimMin)                  % Leaves the bottom of the container
-%                             photon(i,5) = -1*photon(i,5);               % reflect the light beam by flipping the sign of the mu_y vector
-%                             photon(i,2) = yLimMin - (photon(i,2) - yLimMin);
-                            photon(i,8) = -1;                           % mark as terminated
-                            photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
+                            photon(i,5) = -1*photon(i,5);               % reflect the light beam by flipping the sign of the mu_y vector
+                            photon(i,2) = yLimMin - (photon(i,2) - yLimMin);
+                            photon(i,7) = photon(i,7)*wallAbsorption;
+%                             photon(i,8) = -1;                           % mark as terminated
+%                             photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
                             break;
                         end
                         
                         if (photon(i,1) < xLimMin)                   % Leaves the side of the container
-%                             photon(i,4) = -1*photon(i,4);               % reflect the light beam by flipping the sign of the mu_x vector
-%                             photon(i,1) = xLimMin - (photon(i,1) - xLimMin);
-                            photon(i,8) = -1;                           % mark as terminated
-                            photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
+                            photon(i,4) = -1*photon(i,4);               % reflect the light beam by flipping the sign of the mu_x vector
+                            photon(i,1) = xLimMin - (photon(i,1) - xLimMin);
+                            photon(i,7) = photon(i,7)*wallAbsorption;
+%                             photon(i,8) = -1;                           % mark as terminated
+%                             photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
                             break;
                         elseif (photon(i,1) > xLimMax)                  % Leaves the side of the container
-%                             photon(i,4) = -1*photon(i,4);               % reflect the light beam by flipping the sign of the mu_x vector
-%                             photon(i,1) = xLimMax - (photon(i,1) - xLimMax);
-                            photon(i,8) = -1;                           % mark as terminated
-                            photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
+                            photon(i,4) = -1*photon(i,4);               % reflect the light beam by flipping the sign of the mu_x vector
+                            photon(i,1) = xLimMax - (photon(i,1) - xLimMax);
+                            photon(i,7) = photon(i,7)*wallAbsorption;
+%                             photon(i,8) = -1;                           % mark as terminated
+%                             photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
                             break;
                         end
                     end
