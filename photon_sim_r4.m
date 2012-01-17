@@ -11,6 +11,7 @@
 RandStream.setDefaultStream ...
      (RandStream('mt19937ar','seed',sum(100*clock)));
 
+% Change some things if we're running on Linux (i.e. on AWS)
 if (isunix())
     userData = urlread('http://169.254.169.254/latest/user-data');
     if (~strcmp(userData,'autorun_sim'))
@@ -43,7 +44,8 @@ if (isunix())
     dataDir = '/home/wccox/';
     simDir = '/home/wccox/Dropbox/WCC Research/mc';
 else
-    dataDir = 'C:\Users\wccox\Documents\ThesisData\TankSimulations\RoundTwo';
+    %dataDir = 'C:\Users\wccox\Documents\ThesisData\TankSimulations\Harbor';
+    dataDir = 'D:\Simulation Data\Clear';
     simDir = 'C:\Users\wccox\Dropbox\WCC Research\mc';
 end
 
@@ -53,30 +55,47 @@ saveOutput = 'true';                % Save the output data to a folder
 ftpData = 'false';                  % FTP data back to FTP server at conclusion of simulation
 
 num_photons = 1e6;                  % number of photons simulated per batch/group
-num_sims = 150;                     % number of groups to simulate
+num_sims = 10000;                     % number of groups to simulate
 n_water = 1.33;                     % index of refraction of water
 n_window = 1.585;                   % index of refraction of polycarbonate
 
 diverg = 0;
-g = 0.94;
+g = 0.93;
 wallReflect = 1;
-% [cdf_scatter,angle] = generate_scatter('measured','maalox_alan_orig');
+%[cdf_scatter,angle] = generate_scatter('measured','petzold_harbor');
+%[cdf_scatter,angle] = generate_scatter('measured','petzold_coastal');
+[cdf_scatter,angle] = generate_scatter('measured','petzold_clear');
 % [cdf_scatter,angle] = generate_scatter('measured','petzold_maalox');
 % [cdf_scatter,angle] = generate_scatter('measured','widemann_maalox');
 % [cdf_scatter,angle] = generate_scatter('measured','petzold_avg');
 % [cdf_scatter,angle] = generate_scatter('measured','mie_1_micron');
-[cdf_scatter,angle] = generate_scatter('calc','hg',g);
+%[cdf_scatter,angle] = generate_scatter('calc','hg',g);
+
+% Create an average VSF from Harbor and Coastal
+% [cdf_scatter2,angle] = generate_scatter('measured','petzold_coastal');
+% cdf_scatter = (cdf_scatter + cdf_scatter2) ./ 2;
 
 
 % albedo = (c-a)/c;   % Water albedo is scattering coef./atten. coef. (b/c unitless)
-albedo = 0.92;          % Albedo of Maalox (ranges from 0.8 to 0.95) - IF YOU CHANGE THIS, BE SURE TO CHANGE THE MINIMUM POWER VALUE!!!
-receiver_z = 3.66;                     % Z position of the receiver (in meters)
+%albedo = 0.83;          % Albedo of Maalox (ranges from 0.8 to 0.95) - IF YOU CHANGE THIS, BE SURE TO CHANGE THE MINIMUM POWER VALUE!!!
+% albedo = 0.55;
+% albedo = 0.69;          % Coastal/Harbor water albedo
+% albedo = 0.7366;
+albedo = 0.25;
 
-c = 25/receiver_z;
+
+attenuationLength = 16;
+%c = 0.40;                                             % Harbor ~= 2.19, Coastal ~= 0.49, Clear ~= 0.15
+c = 0.15;
+%c = 2.19;
+% c = 1.3;
+receiver_z = attenuationLength/c;                     % Z position of the receiver (in meters)
+
 b = c * albedo;
 a = c - b;
-wallAbsorption = 0.5;               % Photons lose half their weight when colliding with a wall
-beamDiverg = 0.0015;                       %(0.01)*pi/180;           %degtorad(0.01);
+wallAbsorption = 1;               % Photons lose half their weight when colliding with a wall
+
+beamDiverg = 0.0015/2;              % Half angle divergence at the beam waist                 
 beamWidth = 0.001;                  % 1.6 mm (half width). Hecht pg. 595
 
 % beamDiverg = 0;
@@ -138,7 +157,7 @@ weightVarSum = zeros(num_rx,1);
 weightMean = zeros(num_sims,num_rx);
 
 allWeights = 0;
-allAngles = 0;
+allAngles = 0; 
 allDist = 0;
 
 

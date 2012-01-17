@@ -4,11 +4,13 @@
 % the photon movement (to the Rx plane) and the "reception" to be
 % separated.
 
+clear all;close all;clc
+
 if (isunix()) 
-    dataDirectory = '/home/wccox/outputData-21-25-32_2011-08-11';
+    dataDirectory = '/home/wccox/outputData-21-16-31_2011-09-07';
 else
     disp('Windows');
-    dataDirectory = 'C:\Users\wccox\Documents\ThesisData\TankSimulations\RoundTwo\outputData-07-47-36_2011-08-05'; 
+    dataDirectory = 'D:\Simulation Data\HarborI\rev2\outputData-20-56-54_2011-10-31';
 end
 
 % a = 0.396;
@@ -20,19 +22,33 @@ file_list = dir(fullfile(dataDirectory,'*outputData*.mat'));
 num_sims = size(file_list,1);
 
 % % rec_fov = [3;6;18;27;45;90;130;180;3;6;18;27;45;90;130;180].*pi./180;
-% rec_fov = [1;4;5;6;1;4;5;6].*pi./180;
+% rec_fov = [1;2;4;8;16;45;90;180;...
+%     1;2;4;8;16;45;90;180;...
+%     1;2;4;8;16;45;90;180;...
+%     1;2;4;8;16;45;90;180;...
+%     1;2;4;8;16;45;90;180 ...
+%     ].*pi./180;
 % sizeRecPos = size(rec_fov);
 % num_rx = sizeRecPos(1);
 % 
 % rec_pos = zeros(num_rx,2);
 % % rec_aperture = [ones(num_rx/2,1).*0.0508; ones(num_rx/2,1).*0.1016];
-% rec_aperture = [ones(num_rx/2,1).*0.0508; ones(num_rx/2,1).*0.0254];
+% rec_aperture = [ones(num_rx/5,1).*0.008;...
+%     ones(num_rx/5,1).*0.0254;...
+%     ones(num_rx/5,1).*0.0508;...
+%     ones(num_rx/5,1).*0.0762;...
+%     ones(num_rx/5,1).*0.1016;];
 
-
-rec_fov = 26*pi/180;                
+rec_fov = 180*pi/180;
 num_rx = 1;
 rec_pos = [0,0];
-rec_aperture = 0.0508;
+rec_aperture = 1;           % collect lightfield out to 1 m radius
+
+
+% rec_fov = 26*pi/180;                
+% num_rx = 1;
+% rec_pos = [0,0];
+% rec_aperture = 0.05;
 
 
 angleVarSum = zeros(num_rx,1);
@@ -46,6 +62,9 @@ total_power = zeros(num_rx,1);
 total_photons = zeros(num_rx,1);
 total_rec_packets = zeros(num_sims,1);
 
+photonDist = 0;
+photonAngles = 0;
+photonWeights = 0;
 
 tic;
 parfor simcount = 1:num_sims
@@ -61,16 +80,16 @@ parfor simcount = 1:num_sims
 
     
 %======================= CODE FOR RECEIVER ================================    
-    [power,ph_cnt,angle_mean,angle_var,dist_mean,dist_var,weight_mean,weight_var,reflected] ...
-        = mc_rec_r5(a,S.varargin{4},S.varargin{5},S.varargin{6},rec_pos,rec_aperture,rec_fov,num_photons); 
+    [power,ph_cnt,angle_mean,angle_var,dist_mean,dist_var,weight_mean,weight_var,reflected,distances,angles,weights] ...
+        = mc_rec_r4(a,S.varargin{4},S.varargin{5},S.varargin{6},rec_pos,rec_aperture,rec_fov,num_photons); 
     
     total_power = total_power + power';                             % Vectorized sum of the weights of received photons (sum received photons weights over all groupings)
     total_photons = total_photons + ph_cnt';                        % Vectorized sum of number of photons
     photonCount(simcount,:) = ph_cnt;                       % Store the total received photons/detector - used to weight statistics at the end
      
-%     photonDist = [photonDist distances];
-%     photonAngles = [photonAngles angles];
-%     photonWeights = [photonWeights weights];
+    photonDist = [photonDist distances];
+    photonAngles = [photonAngles angles];
+    photonWeights = [photonWeights weights];
 
     % Calculate MEAN and VARIANCE of the ANGLE 
    
@@ -105,8 +124,14 @@ totalVarDist = (1./(total_photons'-1)).*(distVarSum' + sum(photonCount.*(distMea
 totalMeanWeight = sum(weightMean,1)./num_sims;
 totalVarWeight = ((num_photons-1)/(num_photons*num_sims - 1)).*weightVarSum' + ((num_photons)/(num_photons*num_sims - 1)).*sum(weightMean - repmat(totalMeanWeight,size(weightMean,1),1),1).^2;
 
-varWeightPop = totalVarWeight./total_photons';
+stdErr = sqrt(totalVarWeight./(num_photons*num_sims));
+
+% if (num_rx == 1)
+%     scatteringNumber = log(photonWeights(2:end))/log(albedo);
+% end
 
 disp('total_power/(num_photons*num_sims) = ');
 normRxPower = total_power./(num_photons*num_sims)               % Total received power / total transmitted photon packets SHOULD EQUAL total_mean_weight
 sd_dist = sqrt(totalVarDist);  
+%total_photons = total_photons';
+totalMeanWeight = totalMeanWeight';

@@ -96,6 +96,26 @@ if strcmp(func_type,'measured')
         cdf_scatter = cumtrapz(sphereAngles,sin(sphereAngles).*mieVSF1micron);
         cdf_scatter = cdf_scatter ./ max(cdf_scatter);
         petzold_angle_rad = sphereAngles;
+        
+        
+    elseif strcmp(water_cond,'petzold_harbor')
+        load petzold_ocean
+        cdf_scatter = cumtrapz(petzold_ocean(:,1),petzold_ocean(:,2).*sin(petzold_ocean(:,1)));
+        cdf_scatter = cdf_scatter ./ max(cdf_scatter);
+        petzold_angle_rad = petzold_ocean(:,1);
+        
+    elseif strcmp(water_cond,'petzold_coastal')
+        load petzold_ocean
+        cdf_scatter = cumtrapz(petzold_ocean(:,1),petzold_ocean(:,3).*sin(petzold_ocean(:,1)));
+        cdf_scatter = cdf_scatter ./ max(cdf_scatter);
+        petzold_angle_rad = petzold_ocean(:,1);
+        
+    elseif strcmp(water_cond,'petzold_clear')
+        load petzold_ocean
+        cdf_scatter = cumtrapz(petzold_ocean(:,1),petzold_ocean(:,4).*sin(petzold_ocean(:,1)));
+        cdf_scatter = cdf_scatter ./ max(cdf_scatter);
+        petzold_angle_rad = petzold_ocean(:,1);
+        
     end
 
 elseif strcmp(func_type,'calc')

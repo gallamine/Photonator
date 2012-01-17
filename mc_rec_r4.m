@@ -3,7 +3,7 @@
 % Rev 2 - add statistics, mean and variance for power, angle(s)
 % Rev 3 - changed receiver plane to x/y instead of y/z - photons move along
 % the z-axis now
-% Rev 3b/4 - 5/3/11 - added window affects, changed power calculations
+% Rev 3b/4 - 5/3/11 - added window affects, changed power calculations <- SIMPLE BASIC, VERIFIED VERSION
 
 function [power,ph_cnt,angle_mean,angle_var,dist_mean,dist_var,weight_mean,weight_var,reflected,distances,angles,weights] = mc_rec_r4(a,rec_loc_final,total_rec_dist,rec_weights,rec_pos,rec_aperture,rec_fov,numTxPhotons)
 

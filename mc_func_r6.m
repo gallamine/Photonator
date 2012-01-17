@@ -29,14 +29,22 @@ function [total_time,total_rec_power,total_rec_packets,rec_loc_final,total_rec_d
     mc_func_r6(num_photons,scattering_events,c,a,receiver_z,...
     cdf_scatter,angle,init_angle,init_angle2,beamDiverg,beamWidth,wallAbsorption)
 
-useLimits = 'true';
-reflection = 1;
+useLimits = 'false';
+reflection = 0;
+
+rxPlaneLimits = 1;             % Use dimention limits on the receiver plane. This reduces the size of the dataset
+rxXLimMax = 3;          % 3 meters
+rxXLimMin = -3;
+rxYLimMax = 3;
+rxYLimMin = -3; 
 
 nAir = 1;
 nWater = 1.33;
 surfCritAngCos = sqrt(1 - (nAir/nWater)^2);             % sine T1 = nair/nwater sine T3
 
 sizeMult = 1;
+
+zLimMin = 0;
 
 if strcmp(useLimits,'true')
 %     xLimMax = 0.61*sizeMult;
@@ -52,7 +60,7 @@ if strcmp(useLimits,'true')
     yLimMax = 0.1905*sizeMult;
     yLimMin = -.5842*sizeMult;
     zLimMax = receiver_z;
-    zLimMin = 0;
+    
     
 end
 
@@ -163,6 +171,15 @@ while photonsRemaining > 0                      % which is faster? create random
 
                 % euclidian distance to the reciever plane
                 dist_to_rec = z_dist_rec_intersection / photon(i,6);    % z / mu_z
+                
+                if rxPlaneLimits == 1                   % If we're limiting the dimensions of the receiver plane (to reduce the dataset)
+                    if ((photon(i,1) + x_dist_rec_intersection) > rxXLimMax || (photon(i,1) + x_dist_rec_intersection) < rxXLimMin ...
+                            || photon(i,2) + y_dist_rec_intersection > rxYLimMax || photon(i,2) + y_dist_rec_intersection < rxYLimMin)  % Photon exceeds the limits
+                        photon(i,8) = -1;                           % mark as terminated
+                        photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
+                        continue;                                   % Continue on to the next photon, skipping the code below
+                    end
+                end
 
                 rec_loc(i,1) = photon(i,1) + x_dist_rec_intersection;   % x-axis location of reception
                 rec_loc(i,2) = photon(i,2) + y_dist_rec_intersection;    % y-axis location of reception
@@ -217,7 +234,7 @@ while photonsRemaining > 0                      % which is faster? create random
                             photon(i,7) = photon(i,7)*wallAbsorption;
 %                             photon(i,8) = -1;                           % mark as terminated
 %                             photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
-                            break;
+%                             continue;
                         end
                         
                         if (photon(i,1) < xLimMin)                   % Leaves the side of the container
@@ -226,14 +243,14 @@ while photonsRemaining > 0                      % which is faster? create random
                             photon(i,7) = photon(i,7)*wallAbsorption;
 %                             photon(i,8) = -1;                           % mark as terminated
 %                             photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
-                            break;
+%                             continue;
                         elseif (photon(i,1) > xLimMax)                  % Leaves the side of the container
                             photon(i,4) = -1*photon(i,4);               % reflect the light beam by flipping the sign of the mu_x vector
                             photon(i,1) = xLimMax - (photon(i,1) - xLimMax);
                             photon(i,7) = photon(i,7)*wallAbsorption;
 %                             photon(i,8) = -1;                           % mark as terminated
 %                             photonsRemaining = photonsRemaining - 1;    % decrement outstanding photons
-                            break;
+%                             continue;
                         end
                     end
                 end                                    
