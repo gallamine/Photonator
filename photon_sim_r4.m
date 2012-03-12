@@ -49,13 +49,15 @@ else
     simDir = 'C:\Users\wccox\Dropbox\WCC Research\mc';
 end
 
+usersEmail = 'gallamine@gmail.com';     % This user will be emailed info about the finished simulation.
+
 useVCL = 'false';                   % save output file to k drive
 sendEmail = 'true';                % Send email at start and stop of simulation
 saveOutput = 'true';                % Save the output data to a folder
 ftpData = 'false';                  % FTP data back to FTP server at conclusion of simulation
 
 num_photons = 1e6;                  % number of photons simulated per batch/group
-num_sims = 10000;                     % number of groups to simulate
+num_sims = 10;                     % number of groups to simulate
 n_water = 1.33;                     % index of refraction of water
 n_window = 1.585;                   % index of refraction of polycarbonate
 
@@ -347,7 +349,7 @@ if (strcmp(sendEmail,'true'))
     name = lower(name);
     
     subject = sprintf('Simulation on %s with %d photons, %d scattering events completed.', name, num_photons*num_sims, scattering_events)
-    body = sprintf('C = %d (1/m), A = %d (1/m). Simulation took %d minutes to run.',c,a,sim_time);
+    body = sprintf('C = %d (1/m), A = %d (1/m). Simulation took %d minutes to run.\n Data saved to folder: %s',c,a,sim_time,foldername);
     %save output.mat
    
        
@@ -367,5 +369,5 @@ if (strcmp(sendEmail,'true'))
 
     % Send the email. Note that the first input is the address you are sending the email to
     
-    sendmail('gallamine@gmail.com','Simulation complete',[subject body]) 
+    sendmail(usersEmail,'Simulation complete',[subject body]) 
 end
