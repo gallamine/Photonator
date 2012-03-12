@@ -10,7 +10,7 @@ if (isunix())
     dataDirectory = '/home/wccox/outputData-21-16-31_2011-09-07';
 else
     disp('Windows');
-    dataDirectory = 'D:\Simulation Data\HarborI\rev2\outputData-20-56-54_2011-10-31';
+    dataDirectory = 'D:\Simulation Data\Clear\outputData-17-35-43_2012-01-02';
 end
 
 % a = 0.396;
