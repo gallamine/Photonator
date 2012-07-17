@@ -12,7 +12,7 @@ RandStream.setDefaultStream ...
      (RandStream('mt19937ar','seed',sum(100*clock)));
 
 % Change some things if we're running on Linux (i.e. on AWS)
-if (isunix())
+if (isunix() && ~ismac())
     userData = urlread('http://169.254.169.254/latest/user-data');
     if (~strcmp(userData,'autorun_sim'))
         %error('No autorun');
@@ -40,20 +40,28 @@ if (isunix())
     end
 end
 
+if (isunix() && ~ismac()) 
     dataDir = '/home/wccox/';
     simDir = '/home/wccox/Dropbox/WCC Research/mc';
 else
     %dataDir = 'C:\Users\wccox\Documents\ThesisData\TankSimulations\Harbor';
+    if ismac()
+        simDir = '/Users/gallamine/Documents/Photonator';
+        dataDir = '/Users/gallamine/Desktop/PhotonatorOutput';
+    else
+        dataDir = 'D:\Simulation Data\Clear';
+        simDir = 'C:\Users\wccox\Dropbox\WCC Research\mc';
+    end
 end
 
 usersEmail = 'gallamine@gmail.com';     % This user will be emailed info about the finished simulation.
 
 useVCL = 'false';                   % save output file to k drive
-sendEmail = 'true';                % Send email at start and stop of simulation
-saveOutput = 'true';                % Save the output data to a folder
+sendEmail = 'false';                % Send email at start and stop of simulation
+saveOutput = 'false';                % Save the output data to a folder
 ftpData = 'false';                  % FTP data back to FTP server at conclusion of simulation
 
-num_photons = 1e6;                  % number of photons simulated per batch/group
+num_photons = 1e5;                  % number of photons simulated per batch/group
 num_sims = 10;                     % number of groups to simulate
 n_water = 1.33;                     % index of refraction of water
 n_window = 1.585;                   % index of refraction of polycarbonate
@@ -163,9 +171,10 @@ allDist = 0;
 tStart = tic;
 
 poolSize = 8;
-if (matlabpool('size')==0)
-    matlabpool('open','local',poolSize) 
-end
+% Uncomment this if you have the Parallel Toolbox
+% if (matlabpool('size')==0)
+%     matlabpool('open','local',poolSize) 
+% end
 
 totalPhotonsAtRxPlane = 0;
 run_counter = 0;
@@ -176,7 +185,8 @@ finalPhotonPos = zeros(1,5);
 finalPhotonDist = 0;
 finalPhotonWeight = 0;
 
-parfor simcount = 1:num_sims
+% Change this to a PARFOR loop if you have the parallel toolbox
+for simcount = 1:num_sims
     %%
     simcount
     [total_time(simcount), ...
