@@ -40,13 +40,10 @@ if (isunix())
     end
 end
 
-if (isunix()) 
     dataDir = '/home/wccox/';
     simDir = '/home/wccox/Dropbox/WCC Research/mc';
 else
     %dataDir = 'C:\Users\wccox\Documents\ThesisData\TankSimulations\Harbor';
-    dataDir = 'D:\Simulation Data\Clear';
-    simDir = 'C:\Users\wccox\Dropbox\WCC Research\mc';
 end
 
 usersEmail = 'gallamine@gmail.com';     % This user will be emailed info about the finished simulation.
